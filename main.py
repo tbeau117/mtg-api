@@ -2,7 +2,15 @@ from fastapi import FastAPI, Query
 import requests
 import urllib.parse
 
+
 app = FastAPI()
+
+# ✅ Add this root route to prevent 404 errors on Render
+@app.get("/")
+def read_root():
+    return {"message": "MTG Scryfall API is running!"}
+
+# 🔹 Your other routes go below this...
 
 SCRYFALL_SEARCH_URL = "https://api.scryfall.com/cards/search"
 
@@ -66,3 +74,4 @@ def search_keywords(
     if response.status_code == 200:
         return response.json().get("data", [])
     return {"error": f"Scryfall API error {response.status_code}", "details": response.text}
+
