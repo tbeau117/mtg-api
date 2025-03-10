@@ -4,7 +4,7 @@ import logging
 
 app = FastAPI()
 
-# Enable logging to help debug issues
+# Enable detailed logging
 logging.basicConfig(level=logging.INFO)
 
 @app.get("/")
@@ -18,6 +18,9 @@ def search_card(card_name: str = Query(..., title="Card Name", description="Ente
     if not card_name.strip():
         return {"error": "Missing card name"}
 
+    # ✅ Log the received card name
+    logging.info(f"🟢 Received request for: {card_name}")
+
     # ✅ Encode the card name properly
     encoded_card_name = requests.utils.quote(card_name)
 
@@ -27,18 +30,22 @@ def search_card(card_name: str = Query(..., title="Card Name", description="Ente
     # ✅ Log the full request URL
     logging.info(f"🔍 Requesting Scryfall: {scryfall_url}")
 
-    # ✅ Make the request to Scryfall
-    response = requests.get(scryfall_url)
+    try:
+        response = requests.get(scryfall_url)
+        
+        # ✅ Log Scryfall response
+        logging.info(f"📝 Scryfall Response Code: {response.status_code}")
+        logging.info(f"📜 Scryfall Response: {response.text}")
 
-    # ✅ Log the response status
-    logging.info(f"📝 Scryfall Response: {response.status_code} - {response.text}")
+        if response.status_code == 200:
+            return response.json()
+        else:
+            return {
+                "error": f"Scryfall API error {response.status_code}",
+                "details": response.text
+            }
 
-    # ✅ Return the result
-    if response.status_code == 200:
-        return response.json()
-    else:
-        return {
-            "error": f"Scryfall API error {response.status_code}",
-            "details": response.text
-        }
+    except Exception as e:
+        logging.error(f"❌ Error contacting Scryfall: {str(e)}")
+        return {"error": "Internal server error", "details": str(e)}
 
